@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#080b13">
+<meta name="description" content="NEON TETRIS — 用 HTML / CSS / JavaScript 打造的現代俄羅斯方塊，支援 SRS 旋轉、7-bag、Hold 與手機觸控。">
+<title>NEON TETRIS</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <h1 class="logo">NEON<span>TETRIS</span></h1>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="btn-sound" aria-pressed="true" title="音效 (M)">音效</button>
+      <button class="icon-btn" id="btn-music" aria-pressed="false" title="音樂 (N)">音樂</button>
+      <button class="icon-btn" id="btn-settings" title="設定">設定</button>
+    </div>
+  </header>
+
+  <main class="stage">
+
+    <aside class="panel panel-left" id="panel-left">
+      <section class="box box-hold">
+        <h2>HOLD</h2>
+        <canvas id="hold-canvas"></canvas>
+      </section>
+      <section class="stats">
+        <div class="stat stat-score"><span>SCORE</span><b id="stat-score">0</b></div>
+        <div class="stat"><span>BEST</span><b id="stat-best">0</b></div>
+        <div class="stat"><span>LEVEL</span><b id="stat-level">1</b></div>
+        <div class="stat"><span>LINES</span><b id="stat-lines">0</b></div>
+        <div class="stat"><span>TIME</span><b id="stat-time">0:00</b></div>
+      </section>
+    </aside>
+
+    <div class="board-slot" id="board-slot">
+    <div class="board-wrap" id="board-wrap">
+      <canvas id="board-canvas"></canvas>
+
+      <div class="overlay" id="overlay" data-state="ready">
+        <div class="overlay-card">
+          <p class="overlay-kicker" id="overlay-kicker">READY</p>
+          <h2 class="overlay-title" id="overlay-title">NEON TETRIS</h2>
+          <p class="overlay-body" id="overlay-body">堆滿一整列就會消除。撐到不能再堆為止。</p>
+          <dl class="overlay-scores" id="overlay-scores" hidden>
+            <div><dt>SCORE</dt><dd id="over-score">0</dd></div>
+            <div><dt>LINES</dt><dd id="over-lines">0</dd></div>
+            <div><dt>LEVEL</dt><dd id="over-level">1</dd></div>
+          </dl>
+          <p class="overlay-record" id="overlay-record" hidden>新紀錄！</p>
+          <button class="primary-btn" id="overlay-btn">開始遊戲</button>
+          <p class="overlay-hint" id="overlay-hint">按 Enter 或空白鍵開始</p>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <aside class="panel panel-right" id="panel-right">
+      <section class="box box-next">
+        <h2>NEXT</h2>
+        <canvas id="next-canvas"></canvas>
+      </section>
+    </aside>
+
+  </main>
+
+  <div class="touch-controls" id="touch-controls">
+    <button class="touch-btn" data-act="rotateCCW" aria-label="逆時針旋轉">&#8630;</button>
+    <button class="touch-btn" data-act="hold" aria-label="暫存">HOLD</button>
+    <button class="touch-btn" data-act="pause" aria-label="暫停">&#10074;&#10074;</button>
+    <button class="touch-btn" data-act="rotateCW" aria-label="順時針旋轉">&#8631;</button>
+  </div>
+
+  <footer class="help">
+    <ul class="keys">
+      <li><kbd>&#8592;</kbd><kbd>&#8594;</kbd> 移動</li>
+      <li><kbd>&#8595;</kbd> 軟降</li>
+      <li><kbd>Space</kbd> 瞬落</li>
+      <li><kbd>&#8593;</kbd> / <kbd>X</kbd> 順轉</li>
+      <li><kbd>Z</kbd> 逆轉</li>
+      <li><kbd>C</kbd> / <kbd>Shift</kbd> 暫存</li>
+      <li><kbd>P</kbd> / <kbd>Esc</kbd> 暫停</li>
+      <li><kbd>R</kbd> 重來</li>
+    </ul>
+    <p class="touch-hint">手機：左右拖曳移動 · 輕點旋轉 · 下滑軟降 · 快速下滑瞬落 · 上滑暫存</p>
+  </footer>
+
+</div>
+
+<div class="modal" id="settings-modal" hidden>
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-label="設定">
+    <h2>設定</h2>
+
+    <div class="field">
+      <label for="set-das">DAS 首次延遲 <b id="set-das-val">130</b> ms</label>
+      <input type="range" id="set-das" min="0" max="300" step="10">
+      <p class="field-hint">按住左右鍵後，要多久才開始連續移動。越小越靈敏。</p>
+    </div>
+
+    <div class="field">
+      <label for="set-arr">ARR 連移間隔 <b id="set-arr-val">25</b> ms</label>
+      <input type="range" id="set-arr" min="0" max="100" step="5">
+      <p class="field-hint">連續移動時每格的間隔。0 = 瞬間貼到底。</p>
+    </div>
+
+    <div class="field">
+      <label for="set-sdr">軟降速度 <b id="set-sdr-val">25</b> ms/格</label>
+      <input type="range" id="set-sdr" min="0" max="100" step="5">
+    </div>
+
+    <div class="field field-row">
+      <label for="set-ghost">顯示落點虛影</label>
+      <input type="checkbox" id="set-ghost">
+    </div>
+
+    <div class="field field-row">
+      <label for="set-grid">顯示格線</label>
+      <input type="checkbox" id="set-grid">
+    </div>
+
+    <div class="modal-actions">
+      <button class="ghost-btn" id="set-reset">回到預設</button>
+      <button class="primary-btn" data-close>完成</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/constants.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/randomizer.js"></script>
+<script src="js/board.js"></script>
+<script src="js/game.js"></script>
+<script src="js/renderer.js"></script>
+<script src="js/input.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
